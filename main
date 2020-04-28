@@ -1,0 +1,538 @@
+import pandas as pd
+import numpy as np
+import distutils.util
+from sklearn.linear_model import LinearRegression
+from sklearn.svm import SVR
+from sklearn.model_selection import train_test_split
+from PyQt5 import QtCore, QtGui, QtWidgets, Qt
+from PyQt5.QtWidgets import (QAction, QWidget, QTextBrowser, QPushButton, QMenuBar, QStatusBar, QMenu,
+                             QApplication, QMainWindow, QDialog, QFileDialog, QLineEdit, QLabel, QMessageBox, QTableView)
+
+spreadSheet, fileType, lrPredictions, svrPredictions = ('', '', [], [])
+
+class LinearRegressionSetup(object):
+    def lrSetupUi(self, Dialog):
+        Dialog.setObjectName("Dialog")
+        Dialog.resize(161, 220)
+        Dialog.setMinimumSize(QtCore.QSize(161, 220))
+        Dialog.setMaximumSize(QtCore.QSize(161, 220))
+
+        self.lrRunButton = QPushButton(Dialog)
+        self.lrRunButton.setGeometry(QtCore.QRect(10, 170, 141, 31))
+        self.lrRunButton.setObjectName("lrRunButton")
+        self.lrRunButton.clicked.connect(self.lrRunButtonClicked)
+
+        self.lrFitInput = QLineEdit(Dialog)
+        self.lrFitInput.setGeometry(QtCore.QRect(80, 20, 71, 20))
+        self.lrFitInput.setText("")
+        self.lrFitInput.setMaxLength(5)
+        self.lrFitInput.setObjectName("lrFitInput")
+
+        self.lrFitLabel = QLabel(Dialog)
+        self.lrFitLabel.setGeometry(QtCore.QRect(10, 20, 71, 20))
+        self.lrFitLabel.setObjectName("lrFitLabel")
+
+        self.lrNormLabel = QLabel(Dialog)
+        self.lrNormLabel.setGeometry(QtCore.QRect(24, 50, 50, 20))
+        self.lrNormLabel.setObjectName("lrNormLabel")
+
+        self.lrNormInput = QLineEdit(Dialog)
+        self.lrNormInput.setGeometry(QtCore.QRect(80, 50, 71, 20))
+        self.lrNormInput.setMaxLength(5)
+        self.lrNormInput.setObjectName("lrNormInput")
+
+        self.lrCopyLabel = QLabel(Dialog)
+        self.lrCopyLabel.setGeometry(QtCore.QRect(34, 80, 50, 20))
+        self.lrCopyLabel.setObjectName("lrCopyLabel")
+
+        self.lrCopyInput = QLineEdit(Dialog)
+        self.lrCopyInput.setGeometry(QtCore.QRect(80, 80, 71, 20))
+        self.lrCopyInput.setMaxLength(5)
+        self.lrCopyInput.setObjectName("lrCopyInput")
+
+        self.lrJobsInput = QLineEdit(Dialog)
+        self.lrJobsInput.setGeometry(QtCore.QRect(80, 110, 71, 20))
+        self.lrJobsInput.setMaxLength(3)
+        self.lrJobsInput.setObjectName("lrJobsInput")
+
+        self.lrJobsLabel = QLabel(Dialog)
+        self.lrJobsLabel.setGeometry(QtCore.QRect(37, 110, 50, 20))
+        self.lrJobsLabel.setObjectName("lrJobsLabel")
+
+        self.lrDaysInput = QtWidgets.QLineEdit(Dialog)
+        self.lrDaysInput.setGeometry(QtCore.QRect(80, 140, 71, 20))
+        self.lrDaysInput.setMaxLength(3)
+        self.lrDaysInput.setObjectName("lrDaysInput")
+
+        self.lrDaysLabel = QtWidgets.QLabel(Dialog)
+        self.lrDaysLabel.setGeometry(QtCore.QRect(39, 140, 50, 20))
+        self.lrDaysLabel.setObjectName("lrDaysLabel")
+
+        self.retranslateUi(Dialog)
+        QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+    def lrRunButtonClicked(self):
+        try:
+            self.fit = distutils.util.strtobool(self.lrFitInput.text())
+            self.norm = distutils.util.strtobool(self.lrNormInput.text())
+            self.copy = distutils.util.strtobool(self.lrCopyInput.text())
+            self.jobs = int(self.lrJobsInput.text())
+            self.days = int(self.lrDaysInput.text())
+
+            global spreadSheet
+            global lrPredictions
+            df = pd.read_csv(spreadSheet)
+            df = df[['Adj Close']]
+            df['Prediction'] = df[['Adj Close']].shift(-self.days)
+
+            self.x = np.array(df.drop(['Prediction'], 1))
+            self.x = self.x[:-self.days]
+            self.y = np.array(df['Prediction'])
+            self.y = self.y[:-self.days]
+
+
+            self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x, self.y)
+            self.lrTest = LinearRegression(fit_intercept=self.fit, normalize=self.norm, copy_X=self.copy, n_jobs=self.jobs).fit(self.x_train,
+                                                                                                self.y_train)
+
+            self.x = np.array(df.drop(['Prediction'], 1))[-self.days:]
+            lrPredictions = self.lrTest.predict(self.x)
+
+            self.success = QMessageBox()
+            self.success.setIcon(QMessageBox.Information)
+            self.success.setText("Values predicted!")
+            self.success.setWindowTitle("Result")
+            self.success.exec()
+
+        except:
+            self.warning = QMessageBox()
+            self.warning.setIcon(QMessageBox.Critical)
+            self.warning.setText("There was an error!")
+            self.warning.setInformativeText('Hint: Your .csv file must contain 1 column named "Adj Close". You should also ' 
+                                            'check sklearn.linear_model.LinearRegression documentation for proper parameters.')
+            self.warning.setWindowTitle("Error")
+            self.warning.exec()
+
+    def retranslateUi(self, Dialog):
+        _translate = QtCore.QCoreApplication.translate
+        Dialog.setWindowTitle(_translate("Dialog", "LR"))
+        self.lrRunButton.setText(_translate("Dialog", "Run"))
+        self.lrFitLabel.setText(_translate("Dialog", "fit_intercept:"))
+        self.lrNormLabel.setText(_translate("Dialog", "normalize:"))
+        self.lrCopyLabel.setText(_translate("Dialog", "copy_X:"))
+        self.lrJobsLabel.setText(_translate("Dialog", "n_jobs:"))
+        self.lrDaysLabel.setText(_translate("Dialog", "  Days:"))
+
+class SupportVRSetup(object):
+    def svrSetupUi(self, Dialog):
+        Dialog.setObjectName("Dialog")
+        Dialog.setWindowModality(QtCore.Qt.ApplicationModal)
+        Dialog.resize(161, 429)
+        Dialog.setMinimumSize(QtCore.QSize(161, 429))
+        Dialog.setMaximumSize(QtCore.QSize(161, 429))
+
+        self.svrRunButton = QtWidgets.QPushButton(Dialog)
+        self.svrRunButton.setGeometry(QtCore.QRect(10, 380, 141, 31))
+        self.svrRunButton.setObjectName("svrRunButton")
+        self.svrRunButton.clicked.connect(self.svrRunButtonClicked)
+
+        self.svrKernelInput = QtWidgets.QLineEdit(Dialog)
+        self.svrKernelInput.setGeometry(QtCore.QRect(80, 20, 71, 20))
+        self.svrKernelInput.setMaxLength(15)
+        self.svrKernelInput.setObjectName("svrKernelInput")
+
+        self.svrKernelLabel = QtWidgets.QLabel(Dialog)
+        self.svrKernelLabel.setGeometry(QtCore.QRect(40, 20, 71, 20))
+        self.svrKernelLabel.setObjectName("svrKernelLabel")
+
+        self.svrDegreeLabel = QtWidgets.QLabel(Dialog)
+        self.svrDegreeLabel.setGeometry(QtCore.QRect(35, 50, 50, 20))
+        self.svrDegreeLabel.setObjectName("svrDegreeLabel")
+
+        self.svrDegreeInput = QtWidgets.QLineEdit(Dialog)
+        self.svrDegreeInput.setGeometry(QtCore.QRect(80, 50, 71, 20))
+        self.svrDegreeInput.setMaxLength(2)
+        self.svrDegreeInput.setObjectName("svrDegreeInput")
+
+        self.svrGammaLabel = QtWidgets.QLabel(Dialog)
+        self.svrGammaLabel.setGeometry(QtCore.QRect(35, 80, 50, 20))
+        self.svrGammaLabel.setObjectName("svrGammaLabel")
+
+        self.svrGammaInput = QtWidgets.QLineEdit(Dialog)
+        self.svrGammaInput.setGeometry(QtCore.QRect(80, 80, 71, 20))
+        self.svrGammaInput.setMaxLength(10)
+        self.svrGammaInput.setObjectName("svrGammaInput")
+
+        self.svrCoefInput = QtWidgets.QLineEdit(Dialog)
+        self.svrCoefInput.setGeometry(QtCore.QRect(80, 110, 71, 20))
+        self.svrCoefInput.setMaxLength(10)
+        self.svrCoefInput.setObjectName("svrCoefInput")
+
+        self.svrCoefLabel = QtWidgets.QLabel(Dialog)
+        self.svrCoefLabel.setGeometry(QtCore.QRect(42, 110, 50, 20))
+        self.svrCoefLabel.setObjectName("svrCoefLabel")
+
+        self.svrTolInput = QtWidgets.QLineEdit(Dialog)
+        self.svrTolInput.setGeometry(QtCore.QRect(80, 140, 71, 20))
+        self.svrTolInput.setMaxLength(10)
+        self.svrTolInput.setObjectName("svrTolInput")
+
+        self.svrTolLabel = QtWidgets.QLabel(Dialog)
+        self.svrTolLabel.setGeometry(QtCore.QRect(57, 140, 50, 20))
+        self.svrTolLabel.setObjectName("svrTolLabel")
+
+        self.svrCLabel = QtWidgets.QLabel(Dialog)
+        self.svrCLabel.setGeometry(QtCore.QRect(61, 170, 50, 20))
+        self.svrCLabel.setObjectName("svrCLabel")
+
+        self.svrShrinkLabel = QtWidgets.QLabel(Dialog)
+        self.svrShrinkLabel.setGeometry(QtCore.QRect(26, 200, 50, 20))
+        self.svrShrinkLabel.setObjectName("svrShrinkLabel")
+
+        self.svrCacheLabel = QtWidgets.QLabel(Dialog)
+        self.svrCacheLabel.setGeometry(QtCore.QRect(16, 230, 61, 20))
+        self.svrCacheLabel.setObjectName("svrCacheLabel")
+
+        self.svrVerbLabel = QtWidgets.QLabel(Dialog)
+        self.svrVerbLabel.setGeometry(QtCore.QRect(29, 260, 50, 20))
+        self.svrVerbLabel.setObjectName("svrVerbLabel")
+
+        self.svrIterLabel = QtWidgets.QLabel(Dialog)
+        self.svrIterLabel.setGeometry(QtCore.QRect(26, 290, 50, 20))
+        self.svrIterLabel.setObjectName("svrIterLabel")
+
+        self.svrCInput = QtWidgets.QLineEdit(Dialog)
+        self.svrCInput.setGeometry(QtCore.QRect(80, 170, 71, 20))
+        self.svrCInput.setMaxLength(10)
+        self.svrCInput.setObjectName("svrCInput")
+
+        self.svrShrinkInput = QtWidgets.QLineEdit(Dialog)
+        self.svrShrinkInput.setGeometry(QtCore.QRect(80, 200, 71, 20))
+        self.svrShrinkInput.setMaxLength(10)
+        self.svrShrinkInput.setObjectName("svrShrinkInput")
+
+        self.svrCacheInput = QtWidgets.QLineEdit(Dialog)
+        self.svrCacheInput.setGeometry(QtCore.QRect(80, 230, 71, 20))
+        self.svrCacheInput.setMaxLength(10)
+        self.svrCacheInput.setObjectName("svrCacheInput")
+
+        self.svrVerbInput = QtWidgets.QLineEdit(Dialog)
+        self.svrVerbInput.setGeometry(QtCore.QRect(80, 260, 71, 20))
+        self.svrVerbInput.setMaxLength(10)
+        self.svrVerbInput.setObjectName("svrVerbInput")
+
+        self.svrIterInput = QtWidgets.QLineEdit(Dialog)
+        self.svrIterInput.setGeometry(QtCore.QRect(80, 290, 71, 20))
+        self.svrIterInput.setMaxLength(10)
+        self.svrIterInput.setObjectName("svrIterInput")
+
+        self.svrDaysInput = QtWidgets.QLineEdit(Dialog)
+        self.svrDaysInput.setGeometry(QtCore.QRect(80, 350, 71, 20))
+        self.svrDaysInput.setMaxLength(10)
+        self.svrDaysInput.setObjectName("svrDaysInput")
+
+        self.svrDaysLabel = QtWidgets.QLabel(Dialog)
+        self.svrDaysLabel.setGeometry(QtCore.QRect(40, 350, 50, 20))
+        self.svrDaysLabel.setObjectName("svrDaysLabel")
+
+        self.svrEpsInput = QtWidgets.QLineEdit(Dialog)
+        self.svrEpsInput.setGeometry(QtCore.QRect(80, 320, 71, 20))
+        self.svrEpsInput.setMaxLength(10)
+        self.svrEpsInput.setObjectName("svrEpsInput")
+
+        self.svrEpsLabel = QtWidgets.QLabel(Dialog)
+        self.svrEpsLabel.setGeometry(QtCore.QRect(35, 320, 40, 20))
+        self.svrEpsLabel.setObjectName("svrEpsLabel")
+
+        self.retranslateUi(Dialog)
+        QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+    def svrRunButtonClicked(self):
+        try:
+            self.kernel = self.svrKernelInput.text()
+            self.degree = int(self.svrDegreeInput.text())
+            try:
+                self.gamma = float(self.svrGammaInput.text())
+            except ValueError:
+                self.gamma = self.svrGammaInput.text()
+            self.coef = float(self.svrCoefInput.text())
+            self.tol = float(self.svrTolInput.text())
+            self.cReg = float(self.svrCInput.text())
+            self.eps = float(self.svrEpsInput.text())
+            self.shrink = distutils.util.strtobool(self.svrShrinkInput.text())
+            self.cacheSize = float(self.svrCacheInput.text())
+            self.verb = distutils.util.strtobool(self.svrVerbInput.text())
+            self.iter = int(self.svrIterInput.text())
+            self.days = int(self.svrDaysInput.text())
+
+            global spreadSheet
+            global svrPredictions
+            df = pd.read_csv(spreadSheet)
+            df = df[['Adj Close']]
+            df['Prediction'] = df[['Adj Close']].shift(-self.days)
+
+            self.x = np.array(df.drop(['Prediction'], 1))
+            self.x = self.x[:-self.days]
+            self.y = np.array(df['Prediction'])
+            self.y = self.y[:-self.days]
+
+            self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(self.x, self.y)
+            self.svrTest = SVR(kernel=self.kernel, degree=self.degree, gamma=self.gamma, coef0=self.coef, tol=self.tol, C=self.cReg,
+                               epsilon=self.eps, shrinking=self.shrink, cache_size=self.cacheSize, verbose=self.verb,
+                               max_iter=self.iter).fit(self.x_train, self.y_train)
+            self.svrTest = SVR().fit(self.x_train, self.y_train)
+
+            self.x = np.array(df.drop(['Prediction'], 1))[-self.days:]
+            svrPredictions = self.svrTest.predict(self.x)
+
+            self.success = QMessageBox()
+            self.success.setText("Values predicted!")
+            self.success.setIcon(QMessageBox.Information)
+            self.success.setWindowTitle("Result")
+            self.success.exec()
+
+        except:
+            self.warning = QMessageBox()
+            self.warning.setIcon(QMessageBox.Critical)
+            self.warning.setText("There was an error!")
+            self.warning.setInformativeText(
+                'Hint: Your .csv file must contain 1 column named "Adj Close". You should also '
+                'check sklearn.svm.SVR documentation for proper parameters.')
+            self.warning.setWindowTitle("Error")
+            self.warning.exec()
+
+    def retranslateUi(self, Dialog):
+        _translate = QtCore.QCoreApplication.translate
+        Dialog.setWindowTitle(_translate("Dialog", "SVR"))
+        self.svrRunButton.setText(_translate("Dialog", "Run"))
+        self.svrKernelLabel.setText(_translate("Dialog", "kernel:"))
+        self.svrDegreeLabel.setText(_translate("Dialog", "degree:"))
+        self.svrGammaLabel.setText(_translate("Dialog", "gamma:"))
+        self.svrCoefLabel.setText(_translate("Dialog", "coef0:"))
+        self.svrTolLabel.setText(_translate("Dialog", "tol:"))
+        self.svrCLabel.setText(_translate("Dialog", "C:"))
+        self.svrShrinkLabel.setText(_translate("Dialog", "shrinking:"))
+        self.svrCacheLabel.setText(_translate("Dialog", "cache_size:"))
+        self.svrVerbLabel.setText(_translate("Dialog", "verbose:"))
+        self.svrIterLabel.setText(_translate("Dialog", "max_iter:"))
+        self.svrDaysLabel.setText(_translate("Dialog", "Days:"))
+        self.svrEpsLabel.setText(_translate("Dialog", "epsilon:"))
+
+
+class helpClass(object):
+    def helpUi(self, Dialog):
+        Dialog.setObjectName("Dialog")
+        Dialog.resize(404, 162)
+        Dialog.setMinimumSize(QtCore.QSize(404, 162))
+        Dialog.setMaximumSize(QtCore.QSize(404, 162))
+        self.textBrowser = QtWidgets.QTextBrowser(Dialog)
+        self.textBrowser.setGeometry(QtCore.QRect(-1, -1, 421, 230))
+        self.textBrowser.setMinimumSize(QtCore.QSize(421, 230))
+        self.textBrowser.setMaximumSize(QtCore.QSize(421, 230))
+        self.textBrowser.setObjectName("textBrowser")
+
+        self.retranslateUi(Dialog)
+        QtCore.QMetaObject.connectSlotsByName(Dialog)
+
+    def retranslateUi(self, Dialog):
+        _translate = QtCore.QCoreApplication.translate
+        Dialog.setWindowTitle(_translate("Dialog", "Help"))
+        self.textBrowser.setHtml(_translate("Dialog",
+                                            "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+                                            "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+                                            "p, li { white-space: pre-wrap; }\n"
+                                            "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
+                                            "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt; font-style:italic;\">Open</span><span style=\" font-size:12pt;\"> allows you to directly import .csv files for value predictions. Formatting requires one column titled </span><span style=\" font-size:12pt; font-style:italic;\">Adj Close</span><span style=\" font-size:12pt;\">.</span></p>\n"
+                                            "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;\"><br /></p>\n"
+                                            "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt; font-style:italic;\">Save </span><span style=\" font-size:12pt;\">exports any recorded data in a .csv format to your local computer.</span></p>\n"
+                                            "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;\"><br /></p>\n"
+                                            "<p style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:12pt; font-style:italic;\">Clear data</span><span style=\" font-size:12pt;\"> erases all existing data in the current session. </span></p>\n"
+                                            "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;\"><br /></p>\n"
+                                            "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;\"><br /></p>\n"
+                                            "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:12pt;\"><br /></p></body></html>"))
+
+class Ui_mainWindow(object):
+    def setupUi(self, mainWindow):
+        mainWindow.setObjectName("mainWindow")
+        mainWindow.resize(400, 250)
+        mainWindow.setMinimumSize(QtCore.QSize(400, 250))
+        mainWindow.setMaximumSize(QtCore.QSize(400, 250))
+        mainWindow.setAutoFillBackground(False)
+
+        #Central Widget
+        self.centralwidget = QWidget(mainWindow)
+        self.centralwidget.setObjectName("centralwidget")
+
+        self.textBrowser = QTextBrowser(self.centralwidget)
+        self.textBrowser.setGeometry(QtCore.QRect(80, 10, 240, 61))
+        self.textBrowser.setObjectName("textBrowser")
+
+        #Button Creation
+        self.lrButton = QtWidgets.QPushButton(self.centralwidget)
+        self.lrButton.setGeometry(QtCore.QRect(210, 100, 101, 31))
+        self.lrButton.setObjectName("lrButton")
+
+        self.svrButton = QtWidgets.QPushButton(self.centralwidget)
+        self.svrButton.setGeometry(QtCore.QRect(210, 160, 101, 31))
+        self.svrButton.setObjectName("svrButton")
+
+        self.lrSave = QtWidgets.QPushButton(self.centralwidget)
+        self.lrSave.setGeometry(QtCore.QRect(90, 100, 101, 31))
+        self.lrSave.setObjectName("lrSave")
+
+        self.svrSave = QtWidgets.QPushButton(self.centralwidget)
+        self.svrSave.setGeometry(QtCore.QRect(90, 160, 101, 31))
+        self.svrSave.setObjectName("svrSave")
+
+        mainWindow.setCentralWidget(self.centralwidget)
+
+        #Menu Bar Creation
+        self.menubar = QMenuBar(mainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 400, 21))
+        self.menubar.setObjectName("menubar")
+
+        #Menu(File) Action Creations
+        self.menuFile = QMenu(self.menubar)
+        self.menuFile.setObjectName("menuFile")
+        mainWindow.setMenuBar(self.menubar)
+
+        self.statusbar = QStatusBar(mainWindow)
+        self.statusbar.setObjectName("statusbar")
+        mainWindow.setStatusBar(self.statusbar)
+
+        self.actionExit = QAction(mainWindow)
+        self.actionExit.setShortcut('Ctrl+Q')
+        self.actionExit.setObjectName("actionExit")
+
+        self.actionOpen = QAction(mainWindow)
+        self.actionOpen.setShortcut('Ctrl+X')
+        self.actionOpen.setObjectName("actionOpen")
+
+        self.actionClear = QAction(mainWindow)
+        self.actionClear.setShortcut('Ctrl+C')
+        self.actionClear.setObjectName("actionClear")
+
+        self.actionHelp = QAction(mainWindow)
+        self.actionHelp.setShortcut('F9')
+        self.actionHelp.setObjectName("actionHelp")
+
+        #Adding Menu(File) Actions to Menu Bar
+        self.menuFile.addAction(self.actionOpen)
+        self.menuFile.addAction(self.actionClear)
+        self.menuFile.addSeparator()
+        self.menuFile.addAction(self.actionHelp)
+        self.menuFile.addAction(self.actionExit)
+        self.menubar.addAction(self.menuFile.menuAction())
+
+        #Button Events
+        self.lrButton.clicked.connect(self.lrButtonClicked)
+        self.svrButton.clicked.connect(self.svrButtonClicked)
+        self.lrSave.clicked.connect(self.lrSaveButtonClicked)
+        self.svrSave.clicked.connect(self.svrSaveButtonClicked)
+
+        #Menu(File) Action Events
+        self.actionOpen.triggered.connect(self.openTrigger)
+        self.actionExit.triggered.connect(self.exitTrigger)
+        self.actionHelp.triggered.connect(self.helpTrigger)
+        self.actionClear.triggered.connect(self.clearTrigger)
+
+        self.retranslateUi(mainWindow)
+        QtCore.QMetaObject.connectSlotsByName(mainWindow)
+
+    #Functions for each Button and Menu Action
+    def openTrigger(self):
+        global spreadSheet
+        tempSheet, tempType = QFileDialog.getOpenFileName(None, "Open .csv", "", "CSV Files (*.csv)")
+
+        if tempSheet:
+            spreadSheet = tempSheet
+            self.statusbar.showMessage("File imported.")
+        else:
+            pass
+
+    def lrButtonClicked(self):
+        global spreadSheet
+        if spreadSheet:
+            self.lrSetupDialog = QDialog()
+            self.lrSetupObject = LinearRegressionSetup()
+            self.lrSetupObject.lrSetupUi(self.lrSetupDialog)
+            self.lrSetupDialog.exec()
+        else:
+            self.statusbar.showMessage("No .csv file imported!")
+
+    def svrButtonClicked(self):
+        global spreadSheet
+        if spreadSheet:
+            self.svrSetupDialog = QDialog()
+            self.svrSetupObject = SupportVRSetup()
+            self.svrSetupObject.svrSetupUi(self.svrSetupDialog)
+            self.svrSetupDialog.exec()
+        else:
+            self.statusbar.showMessage("No .csv file imported!")
+
+    def lrSaveButtonClicked(self):
+        global spreadSheet
+        global lrPredictions
+        if spreadSheet and lrPredictions != []:
+            pd.DataFrame(lrPredictions).to_csv('lrpredictions.csv', index=False)
+            self.statusbar.showMessage("File saved.")
+        else:
+            self.statusbar.showMessage("No data processed!")
+
+    def svrSaveButtonClicked(self):
+        global spreadSheet
+        global svrPredictions
+        if spreadSheet and svrPredictions != []:
+            pd.DataFrame(svrPredictions).to_csv('svrpredictions.csv', index=False)
+            self.statusbar.showMessage("File saved.")
+        else:
+            self.statusbar.showMessage("No data processed!")
+
+    def clearTrigger(self):
+        global spreadSheet
+        global fileType
+        global lrPredictions
+        global svrPredictions
+        spreadSheet, fileType, lrPredictions, svrPredictions = ('', '', [], [])
+        self.statusbar.showMessage("Data cleared.")
+
+    def helpTrigger(self):
+        self.helpDialog = QDialog()
+        self.helpObject = helpClass()
+        self.helpObject.helpUi(self.helpDialog)
+        self.helpDialog.show()
+
+    def exitTrigger(self):
+        QApplication.quit()
+
+    #Main Window Formatting
+    def retranslateUi(self, mainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        mainWindow.setWindowTitle(_translate("mainWindow", "Stock Predictor"))
+        self.textBrowser.setHtml(_translate("mainWindow",
+                                            "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+                                            "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
+                                            "p, li { white-space: pre-wrap; }\n"
+                                            "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:8.25pt; font-weight:400; font-style:normal;\">\n"
+                                            "<p align=\"center\" style=\" margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" font-size:16pt; font-weight:600; color:#ba0003;\">Stock Predictor</span></p>\n"
+                                            "<p align=\"center\" style=\" margin-top:12px; margin-bottom:12px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><span style=\" color:#ba0003;\">Joshua Yun</span></p></body></html>"))
+        self.lrButton.setText(_translate("mainWindow", "Linear Regression"))
+        self.svrButton.setText(_translate("mainWindow", "Support VR"))
+        self.lrSave.setText(_translate("mainWindow", "Save"))
+        self.svrSave.setText(_translate("mainWindow", "Save"))
+        self.menuFile.setTitle(_translate("mainWindow", "File"))
+        self.actionExit.setText(_translate("mainWindow", "Exit"))
+        self.actionOpen.setText(_translate("mainWindow", "Open"))
+        self.actionClear.setText(_translate("mainWindow", "Clear Data"))
+        self.actionHelp.setText(_translate("mainWindow", "Help"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QApplication(sys.argv)
+    mainWindow = QMainWindow()
+    ui = Ui_mainWindow()
+    ui.setupUi(mainWindow)
+    mainWindow.show()
+    sys.exit(app.exec_())
+

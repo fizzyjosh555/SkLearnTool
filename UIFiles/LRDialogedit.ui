@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Dialog</class>
+ <widget class="QDialog" name="Dialog">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>161</width>
+    <height>220</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>SVR</string>
+  </property>
+  <widget class="QPushButton" name="lrRunButton">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>170</y>
+     <width>141</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Run</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="svrKernelInput">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>20</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string/>
+   </property>
+   <property name="maxLength">
+    <number>5</number>
+   </property>
+  </widget>
+  <widget class="QLabel" name="svrKernelLabel">
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>20</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>kernel:</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="svrDegreeLabel">
+   <property name="geometry">
+    <rect>
+     <x>35</x>
+     <y>50</y>
+     <width>50</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>degree:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="svrDegreeInput">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>50</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="maxLength">
+    <number>5</number>
+   </property>
+  </widget>
+  <widget class="QLabel" name="svrGammaLabel">
+   <property name="geometry">
+    <rect>
+     <x>35</x>
+     <y>80</y>
+     <width>50</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>50</width>
+     <height>20</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>50</width>
+     <height>20</height>
+    </size>
+   </property>
+   <property name="text">
+    <string>gamma:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="svrGammaInput">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>80</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="maxLength">
+    <number>5</number>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="svrCoefInput">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>110</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string notr="true"/>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="inputMethodHints">
+    <set>Qt::ImhDigitsOnly</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="svrCoefLabel">
+   <property name="geometry">
+    <rect>
+     <x>42</x>
+     <y>110</y>
+     <width>50</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>coef0:</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="svrTolInput">
+   <property name="geometry">
+    <rect>
+     <x>80</x>
+     <y>140</y>
+     <width>71</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="toolTip">
+    <string notr="true"/>
+   </property>
+   <property name="statusTip">
+    <string notr="true"/>
+   </property>
+   <property name="inputMethodHints">
+    <set>Qt::ImhDigitsOnly</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="svrTolLabel">
+   <property name="geometry">
+    <rect>
+     <x>57</x>
+     <y>140</y>
+     <width>50</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>tol:</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
